@@ -6,7 +6,8 @@ MunsellPicker is a simple way to transform sRGB colours into Munsell references 
 The Munsell system deconstructs a colour into three components, it’s Hue, Value and Chromacity. The only difference between 5P 5/10 and 5P 6/10, is one level of Value, the other two factors are left untouched! A little useful.
 
 Here it is in action
-![MunsellPicker](http://i.imgur.com/g9TC7e3.gifv)
+
+![MunsellPicker](https://raw.githubusercontent.com/germ/munsellScript/master/demo.gif)
 
 MunsellPicker is simple to install.
 
