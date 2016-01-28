@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 	"fmt"
-	"errors"
+	"math"
+	"os/exec"
 	"strings"
 	"io/ioutil"
-	"math"
 	"encoding/json"
 	"encoding/hex"
 )
@@ -21,12 +21,18 @@ func main() {
 
 	// Read in the value from stdin
 	// My last confession was nine months ago
+	// Try clipboard on fail
 	req, err := ioutil.ReadAll(os.Stdin)
 	if err != nil || len(req) == 0 {
-		panic(err)
+		req, err = exec.Command("pbpaste").Output()
 	}
 
-	//Clean input
+	if err != nil || len(req) == 0 {
+		tell(err.Error(), false)
+		return
+	}
+
+	//Clean input 7.5P 9/6 #FFD8FF 
 	// These are my sins
 	input := strings.ToUpper(strings.TrimSpace(string(req)))
 	
@@ -49,24 +55,50 @@ func main() {
 			}
 			
 			// Print & exit
-			fmt.Println(bestMatch)
+			tell(bestMatch, true)
 			return
 		}
 
 		// Print & exit
-		fmt.Println(val)
+		tell(val, true)
 		return
 	}
 
 	// Munsell value, pull RGB
 	for i, v := range(dearGodICantProgram) {
 		if v == input {
-			fmt.Println(i)
+			tell(i, true)
 			return
 		}
 	}
 
-	panic(errors.New("You fucked up Rick, lay off the raviolis."))
+	tell("Invalid Input", false)
+}
+
+//Helper to display notifications, paste to clip
+func tell(msg string, copyToBoard bool) {
+	// Display notification
+	osaCmd := fmt.Sprintf("display notification \"%v\" with title \"Munsell\"", msg)
+	err := exec.Command("osascript", "-e", osaCmd).Run()
+	if err != nil {
+		tell(err.Error(), false)
+		return
+	}
+
+	if !copyToBoard {
+		return
+	}
+
+	// Copy to clipboard
+	copyCmd := exec.Command("pbcopy")
+	stdin, _ := copyCmd.StdinPipe()
+	copyCmd.Start()
+	fmt.Fprintf(stdin, "%v", msg)
+	stdin.Close()
+	copyCmd.Wait()
+	
+	// Print to stdout
+	fmt.Println(msg)
 }
 
 // hex string difference function, 0 is equal
@@ -74,7 +106,7 @@ func hexDiff(h1, h2 string) int {
 	first, err := hex.DecodeString(h1)
 	second, err := hex.DecodeString(h2)
 	if err != nil {
-		fmt.Println(first, second)
+		tell(err.Error(), false)
 		panic(err)
 	}
 
@@ -1711,6 +1743,7 @@ var MunData = []byte(`{
 "#F1E1E4":"7.5RP 9/2",
 "#FFDAE2":"7.5RP 9/4",
 "#FFD3E0":"7.5RP 9/6",
+"#000000":"N0",
 "#222221":"N1",
 "#3B3A3A":"N2",
 "#525251":"N3",
@@ -1719,5 +1752,6 @@ var MunData = []byte(`{
 "#A3A2A2":"N6",
 "#B5B6B5":"N7",
 "#CACACA":"N8",
-"#E9E8E7":"N9"
+"#E9E8E7":"N9",
+"#FFFFFF":"N10"
 }`)
